@@ -4,10 +4,31 @@ import pandas
 from random import randint
 BACKGROUND_COLOR = "#B1DDC6"
 current_card = {}
-
+to_learn = {}
 # Read data from csv
-data = pandas.read_csv("data/french_words.csv")
-df = data.to_dict(orient="records")
+
+# take data from word_to_learn file
+# if file not found, take data from french_words
+try:
+    data = pandas.read_csv("data/words_to_learn.csv")
+except FileNotFoundError:
+    original_data = pandas.read_csv("data/french_words.csv")
+    to_learn = original_data.to_dict(orient="records")
+else:
+    to_learn = data.to_dict(orient="records")
+
+# Delete the word
+def is_known():
+    """remove the current card from the list, save new list to word_to_learn file"""
+    to_learn.remove(current_card)
+    print(len(to_learn))
+    new_data = pandas.DataFrame(to_learn)
+
+    # delete index from the new file
+    new_data.to_csv("data/words_to_learn.csv", index=False)
+
+    random_word()
+
 
 # Flip card
 def flip_card():
@@ -22,7 +43,7 @@ def random_word():
     # random_word = data.loc[random_number, "French"]
     global current_card, flip_timer
     window.after_cancel(flip_timer)
-    current_card = random.choice(df)
+    current_card = random.choice(to_learn)
     current_word = current_card["French"]
     canvas.itemconfig(card, image=card_font)
     canvas.itemconfig(language_source, text="French",fill="black")
@@ -47,7 +68,7 @@ language_source = canvas.create_text(400,150, fill="black", font=("Ariel", 40, "
 word = canvas.create_text(400,263, fill="black", font=("Ariel", 60, "bold"))
 
 right_img = PhotoImage(file="images/right.png")
-right_btn = Button(image=right_img,highlightthickness=0,command=random_word)
+right_btn = Button(image=right_img,highlightthickness=0,command=is_known)
 right_btn.grid(row=1,column=1)
 
 wrong_img = PhotoImage(file="images/wrong.png")
